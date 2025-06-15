@@ -4,8 +4,11 @@
 
 import nltk
 import spacy
+import pandas as pd
+import numpy as np
 from pathlib import Path
 from collections import Counter
+
 
 
 nlp = spacy.load("en_core_web_sm")
@@ -20,9 +23,21 @@ def read_texts(novel_path):
         parts = file.stem.split("-") 
 
         year = int(parts[-1]) #last bit of the filename is the year
-        author = parts[-2] #second last bit of the filename is the author
-        title = parts[:-2] #everything else is the title
+        author = str(parts[-2]) #second last bit of the filename is the author
+        title_raw = str(parts[:-2]) #everything else is the title
 
+        title = title_raw.replace("_", " ").title()  # replace underscores with spaces and title case
+
+        with open(file, "r", encoding="utf-8") as f:
+            text = f.read()
+
+        rows.append({"Title": title, "Author": author, "Year": year, "Text": text})
+        
+    df = pd.DataFrame(rows)
+
+    df = df.sort_values(by=Year, ascending=True) #sort by year
+    
+    return df
 
 
 def fk_level(text, d):
