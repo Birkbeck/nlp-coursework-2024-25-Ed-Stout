@@ -31,13 +31,18 @@ def read_texts(novel_path):
         with open(file, "r", encoding="utf-8") as f:
             text = f.read()
 
-        rows.append({"Title": title, "Author": author, "Year": year, "Text": text})
+        rows.append({"title": title, "author": author, "year": year, "text": text})
         
     df = pd.DataFrame(rows)
 
-    df = df.sort_values(by=Year, ascending=True) #sort by year
-    
+    print(df.columns)
+    print(df.head())
+
+    df = df.sort_values(by="year", ascending=True) #sort by year
+    #df = df.reset_index(drop=True)  # reset index after sorting
     return df
+
+print(read_texts(r"C:\Users\eddie\NLP\Coursework\p1-texts\novels"))
 
 
 def fk_level(text, d):
