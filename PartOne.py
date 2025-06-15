@@ -5,10 +5,23 @@
 import nltk
 import spacy
 from pathlib import Path
+from collections import Counter
 
 
 nlp = spacy.load("en_core_web_sm")
 nlp.max_length = 2000000
+
+#Question 1a
+def read_texts(novel_path):
+    rows = []
+    novel_path = Path(novel_path)
+
+    for file in novel_path.glob("*.txt"):
+        parts = file.stem.split("-") 
+
+        year = int(parts[-1]) #last bit of the filename is the year
+        author = parts[-2] #second last bit of the filename is the author
+        title = parts[:-2] #everything else is the title
 
 
 
