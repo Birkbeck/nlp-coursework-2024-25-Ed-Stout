@@ -122,8 +122,26 @@ def count_syl(word, d):
     Returns:
         int: The number of syllables in the word.
     """
-    pass
+    word = word.lower()
 
+    if word in d:
+        return len(d[word][0])  # return the number of syllables in the dictionary, should be the first entry of the list
+    else: # estimate syllables by counting vowel clusters
+        vowels = "aeiouy"
+        count = 0
+        prev_vowel = False
+        for char in word:
+            if char in vowels:
+                if not prev_vowel:
+                    count += 1
+                prev_vowel = True
+            else:
+                prev_vowel = False
+        
+    if count > 0:
+        return count
+    else:
+        return 1 # at least one syllable per word
 
 def parse(df, store_path=Path.cwd() / "pickles", out_name="parsed.pickle"):
     """Parses the text of a DataFrame using spaCy, stores the parsed docs as a column and writes 
