@@ -99,6 +99,17 @@ def fk_level(text, d):
     if total_words == 0 or total_sentences == 0:
         return 0
 
+    total_syllables = 0
+    for word in words:
+        syllables = count_syl(word, d)
+        total_syllables += syllables
+    
+    avg_sentence_length = total_words / total_sentences
+    avg_syllables_per_word = total_syllables / total_words
+
+    fk_grade = 0.39 * avg_sentence_length + 11.8 * avg_syllables_per_word - 15.59 #check this
+
+    return fk_grade
 
 def count_syl(word, d):
     """Counts the number of syllables in a word given a dictionary of syllables per word.
