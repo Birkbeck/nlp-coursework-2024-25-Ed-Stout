@@ -8,13 +8,18 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from collections import Counter
-
-
+import re
+import string
 
 nlp = spacy.load("en_core_web_sm")
 nlp.max_length = 2000000
 
 #Question 1a
+#def read_novels(path=Path.cwd() / "texts" / "novels"):
+#    """Reads texts from a directory of .txt files and returns a DataFrame with the text, title,
+#    author, and year"""
+#    pass
+
 def read_novels(novel_path):
     rows = []
     novel_path = Path(novel_path)
@@ -31,6 +36,9 @@ def read_novels(novel_path):
         with open(file, "r", encoding="utf-8") as f:
             text = f.read()
 
+# create an empty dataframe with the column headings we need
+#evaluation_results = pd.DataFrame(columns=['Model', 'Test Words', 'Cosine Similarity'], dtype=object)
+
         rows.append({"text": text, "title": title, "author": author, "year": year})
         
     df = pd.DataFrame(rows)
@@ -44,9 +52,18 @@ def read_novels(novel_path):
 #ttr_text_raw = read_novels(r"C:\Users\eddie\NLP\Coursework\p1-texts\novels")
 #ttr_text = ttr_text_raw["text"].tolist()
 
+def clean_text(text):
+    """Cleans the text by removing punctuation and converting to lowercase."""
+    text = text.lower()  # convert to lowercase
+    re_punc = re.compile('[%s]' % re.escape(string.punctuation))  # regex for punctuation
+    text = re_punc.sub('', text)  # remove punctuation
+    return text
+
 def nltk_ttr(text):
     """Calculates the type-token ratio of a text. Text is tokenized using nltk.word_tokenize."""
-    tokens = nltk.word_tokenize(text.lower()) #all input text now lowercase
+    text = text.lower() #all input text now lowercase
+
+    tokens = nltk.word_tokenize(text.lower())
 
     re_punc = re.compile('[%s]' % re.escape(string.punctuation)) #removes punctuation
 
@@ -58,8 +75,8 @@ def nltk_ttr(text):
     ttr = len(set(words)) / len(words)  # type-token ratio
 
     return ttr
-    
-    pass
+
+    #pass
 
 
 def fk_level(text, d):
@@ -87,12 +104,6 @@ def count_syl(word, d):
     Returns:
         int: The number of syllables in the word.
     """
-    pass
-
-
-def read_novels(path=Path.cwd() / "texts" / "novels"):
-    """Reads texts from a directory of .txt files and returns a DataFrame with the text, title,
-    author, and year"""
     pass
 
 
