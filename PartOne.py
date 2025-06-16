@@ -61,21 +61,18 @@ def clean_text(text):
 
 def nltk_ttr(text):
     """Calculates the type-token ratio of a text. Text is tokenized using nltk.word_tokenize."""
-    text = text.lower() #all input text now lowercase
+    cleaned_text = clean_text(text)  # clean the text
 
-    tokens = nltk.word_tokenize(text.lower())
-
-    re_punc = re.compile('[%s]' % re.escape(string.punctuation)) #removes punctuation
+    tokens = nltk.word_tokenize(cleaned_text)
 
     words = [word for word in tokens if word.isalpha()]  #only alphabetic tokens
     
-    if not words:
+    if not words: #handle no words
         return 0
     
     ttr = len(set(words)) / len(words)  # type-token ratio
 
     return ttr
-
     #pass
 
 
@@ -90,7 +87,17 @@ def fk_level(text, d):
     Returns:
         float: The Flesch-Kincaid Grade Level of the text. (higher grade is more difficult)
     """
-    pass
+    
+    cleaned_text = clean_text(text)  # clean the text
+    tokens = nltk.word_tokenize(cleaned_text)
+
+    words = [word for word in tokens if word.isalpha()]  # only alphabetic tokens
+
+    total_sentences = len(sentences)
+    total_words = len(words)
+
+    if total_words == 0 or total_sentences == 0:
+        return 0
 
 
 def count_syl(word, d):
