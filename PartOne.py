@@ -15,7 +15,7 @@ nlp = spacy.load("en_core_web_sm")
 nlp.max_length = 2000000
 
 #Question 1a
-def read_texts(novel_path):
+def read_novels(novel_path):
     rows = []
     novel_path = Path(novel_path)
 
@@ -31,18 +31,35 @@ def read_texts(novel_path):
         with open(file, "r", encoding="utf-8") as f:
             text = f.read()
 
-        rows.append({"title": title, "author": author, "year": year, "text": text})
+        rows.append({"text": text, "title": title, "author": author, "year": year})
         
     df = pd.DataFrame(rows)
-
-    print(df.columns)
-    print(df.head())
 
     df = df.sort_values(by="year", ascending=True) #sort by year
     #df = df.reset_index(drop=True)  # reset index after sorting
     return df
 
-print(read_texts(r"C:\Users\eddie\NLP\Coursework\p1-texts\novels"))
+#print(read_novels(r"C:\Users\eddie\NLP\Coursework\p1-texts\novels"))
+
+#ttr_text_raw = read_novels(r"C:\Users\eddie\NLP\Coursework\p1-texts\novels")
+#ttr_text = ttr_text_raw["text"].tolist()
+
+def nltk_ttr(text):
+    """Calculates the type-token ratio of a text. Text is tokenized using nltk.word_tokenize."""
+    tokens = nltk.word_tokenize(text.lower()) #all input text now lowercase
+
+    re_punc = re.compile('[%s]' % re.escape(string.punctuation)) #removes punctuation
+
+    words = [word for word in tokens if word.isalpha()]  #only alphabetic tokens
+    
+    if not words:
+        return 0
+    
+    ttr = len(set(words)) / len(words)  # type-token ratio
+
+    return ttr
+    
+    pass
 
 
 def fk_level(text, d):
@@ -82,11 +99,6 @@ def read_novels(path=Path.cwd() / "texts" / "novels"):
 def parse(df, store_path=Path.cwd() / "pickles", out_name="parsed.pickle"):
     """Parses the text of a DataFrame using spaCy, stores the parsed docs as a column and writes 
     the resulting  DataFrame to a pickle file"""
-    pass
-
-
-def nltk_ttr(text):
-    """Calculates the type-token ratio of a text. Text is tokenized using nltk.word_tokenize."""
     pass
 
 
