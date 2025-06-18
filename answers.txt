@@ -1,5 +1,9 @@
 Answers to the text questions go here.
 
+<<<<<<< HEAD
+=======
+1d:
+>>>>>>> 8129a5c9fedd651a06da22893fe08d70e0d68bd7
 The Flesch-Kincaid Score (FKS) estimates readability using only sentence length and word syllable count. While useful for a rough guide, it ignores many factors that affect how difficult a text actually is to understand.
 
 Firstly, FKS doesn’t account for the conceptual difficulty of words, or for lexical and syntactic ambiguity. Lexical ambiguity is when a word has multiple meanings e.g. a bat can mean an animal or sports equipment. Syntactic ambiguity is when a sentence can be interpreted in different ways e.g. “I shot a man with a telescope” could mean either person had the telescope, or that “shot” refers to a photo rather than a weapon. Word length and syllable count do not take this into account meaning important complexities of meaning within a text are not captured by FKS.
