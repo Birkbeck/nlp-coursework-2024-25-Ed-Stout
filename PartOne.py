@@ -15,17 +15,11 @@ import os
 nlp = spacy.load("en_core_web_sm")
 nlp.max_length = 2000000
 
-#Question 1a
-#def read_novels(path=Path.cwd() / "texts" / "novels"):
-#    """Reads texts from a directory of .txt files and returns a DataFrame with the text, title,
-#    author, and year"""
-#    pass
-
-def read_novels(novel_path):
+def read_novels(path=Path.cwd() / "texts" / "novels"):
+    """Reads texts from a directory of .txt files and returns a DataFrame with the text, title, author, and year"""
     rows = []
-    novel_path = Path(novel_path)
 
-    for file in novel_path.glob("*.txt"):
+    for file in path.glob("*.txt"):
         parts = file.stem.split("-") 
 
         year = int(parts[-1]) #last bit of the filename is the year
@@ -80,13 +74,6 @@ def nltk_ttr(text):
 def fk_level(text, d):
     """Returns the Flesch-Kincaid Grade Level of a text (higher grade is more difficult).
     Requires a dictionary of syllables per word.
-
-    Args:
-        text (str): The text to analyze.
-        d (dict): A dictionary of syllables per word.
-
-    Returns:
-        float: The Flesch-Kincaid Grade Level of the text. (higher grade is more difficult)
     """
     
     cleaned_text = clean_text(text)  # clean the text
@@ -149,9 +136,18 @@ def parse(df, store_path=Path.cwd() / "pickles", out_name="parsed.pickle"):
     the resulting  DataFrame to a pickle file"""
     
     parsed_docs = []
-    for story in df["text"]:
-        doc = nlp(story)
-        parsed_docs.append(doc)
+    try: 
+        for story in df["text"]:
+            doc = nlp(story)
+            parsed_docs.append(doc)
+    except Exception as e:
+        print("File too big, parsing texts in sections as per note on question 1d")
+        doc = []
+        for i in range(0, len(story), 500000):
+            section = story[i:i+500000]
+            doc.append(nlp(section))  # parse the section
+
+    parsed_docs.append(doc)
     
     df['parsed'] = parsed_docs  # add the parsed docs to the DataFrame
 
@@ -199,13 +195,13 @@ if __name__ == "__main__":
     """
     uncomment the following lines to run the functions once you have completed them
     """
-    #path = Path.cwd() / "p1-texts" / "novels"
+    path = Path.cwd() / "p1-texts" / "novels"
     #print(path)
-    #df = read_novels(path) # this line will fail until you have completed the read_novels function above.
+    df = read_novels(path) # this line will fail until you have completed the read_novels function above.
     #print(df.head())
     #nltk.download("cmudict")
-    #parse(df)
-    #print(df.head())
+    parse(df)
+    print(df.head())
     #print(get_ttrs(df))
     #print(get_fks(df))
     #df = pd.read_pickle(Path.cwd() / "pickles" /"name.pickle")

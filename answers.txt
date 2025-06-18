@@ -1,1 +1,7 @@
 Answers to the text questions go here.
+
+The Flesch-Kincaid Score (FKS) estimates readability using only sentence length and word syllable count. While useful for a rough guide, it ignores many factors that affect how difficult a text actually is to understand.
+
+Firstly, FKS doesn’t account for the conceptual difficulty of words, or for lexical and syntactic ambiguity. Lexical ambiguity is when a word has multiple meanings e.g. a bat can mean an animal or sports equipment. Syntactic ambiguity is when a sentence can be interpreted in different ways e.g. “I shot a man with a telescope” could mean either person had the telescope, or that “shot” refers to a photo rather than a weapon. Word length and syllable count do not take this into account meaning important complexities of meaning within a text are not captured by FKS.
+
+Secondly, FKS was designed for English and assumes longer words are harder. This doesn’t always hold across languages e.g. in German, compound nouns are long but conceptually simple. Even in English, some long words are easy: everywhere (3 syllables, 10 letters) is common and simple, while heuristic (also 3 syllables, 10 letters) is more conceptually advanced, but FKS treats them the same.
