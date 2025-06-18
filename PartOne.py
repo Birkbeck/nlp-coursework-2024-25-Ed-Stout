@@ -10,6 +10,7 @@ from pathlib import Path
 from collections import Counter
 import re
 import string
+import os 
 
 nlp = spacy.load("en_core_web_sm")
 nlp.max_length = 2000000
@@ -146,7 +147,17 @@ def count_syl(word, d):
 def parse(df, store_path=Path.cwd() / "pickles", out_name="parsed.pickle"):
     """Parses the text of a DataFrame using spaCy, stores the parsed docs as a column and writes 
     the resulting  DataFrame to a pickle file"""
-    pass
+    
+    parsed_docs = []
+    for story in df["text"]:
+        doc = nlp(story)
+        parsed_docs.append(doc)
+    
+    df['parsed'] = parsed_docs  # add the parsed docs to the DataFrame
+
+    df.to_pickle(store_path / out_name)  # save the DataFrame to a pickle file
+
+    return df
 
 
 def get_ttrs(df):
