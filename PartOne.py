@@ -172,15 +172,27 @@ def subjects_by_verb_pmi(doc, target_verb):
 
 def subjects_by_verb_count(doc, verb):
     """Extracts the most common subjects of a given verb in a parsed document. Returns a list."""
-    pass
+    subjects = Counter()
 
+    for token in doc:
+        if token.lemma_ == verb and token.pos_ == "VERB":
+            for subject in token.children:
+                if subject.dep_ in ("nsubj", "nsubjpass"):
+                    subjects[subject.lemma_] += 1
+
+    
+    return subjects.most_common(100)  # return the 100 most common subjects
 
 
 def adjective_counts(doc):
     """Extracts the most common adjectives in a parsed document. Returns a list of tuples."""
-    pass
+    adjectives = Counter()
 
-
+    for token in doc:
+        if token.pos_ == "ADJ":
+            adjectives[token.lemma_] += 1
+    
+    return adjectives.most_common(100)  # return the 100 most common adjectives
 
 if __name__ == "__main__":
     """
@@ -192,9 +204,9 @@ if __name__ == "__main__":
     #print(df.head())
     #nltk.download("cmudict")
     parse(df)
-    print(df.head())
-    #print(get_ttrs(df))
-    #print(get_fks(df))
+    #print(df.head())
+    print(get_ttrs(df))
+    print(get_fks(df))
     #df = pd.read_pickle(Path.cwd() / "pickles" /"name.pickle")
     # print(adjective_counts(df))
     """ 
