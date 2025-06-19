@@ -102,13 +102,6 @@ def fk_level(text, d):
 def count_syl(word, d):
     """Counts the number of syllables in a word given a dictionary of syllables per word.
     if the word is not in the dictionary, syllables are estimated by counting vowel clusters
-
-    Args:
-        word (str): The word to count syllables for.
-        d (dict): A dictionary of syllables per word.
-
-    Returns:
-        int: The number of syllables in the word.
     """
     word = word.lower()
 
@@ -136,18 +129,16 @@ def parse(df, store_path=Path.cwd() / "pickles", out_name="parsed.pickle"):
     the resulting  DataFrame to a pickle file"""
     
     parsed_docs = []
-    try: 
-        for story in df["text"]:
-            doc = nlp(story)
+    for story in df["text"]:
+        if len(story) > 1000000:
+            print("File too big, parsing texts in sections as per note on question 1d")
+            doc = []
+            for i in range(0, len(story), 1000000):
+                section = story[i:i+1000000]
+                doc.append(nlp(section))  # parse the section
             parsed_docs.append(doc)
-    except Exception as e:
-        print("File too big, parsing texts in sections as per note on question 1d")
-        doc = []
-        for i in range(0, len(story), 500000):
-            section = story[i:i+500000]
-            doc.append(nlp(section))  # parse the section
-
-    parsed_docs.append(doc)
+        else:
+            parsed_docs.append(nlp(story))  # parse the whole text
     
     df['parsed'] = parsed_docs  # add the parsed docs to the DataFrame
 
