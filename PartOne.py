@@ -78,6 +78,7 @@ def fk_level(text, d):
     
     cleaned_text = clean_text(text)  # clean the text
     tokens = nltk.word_tokenize(cleaned_text)
+    sentences = nltk.sent_tokenize(text)  # split text into sentences
 
     words = [word for word in tokens if word.isalpha()]  # only alphabetic tokens
 
@@ -166,7 +167,10 @@ def get_fks(df):
 
 def subjects_by_verb_pmi(doc, target_verb):
     """Extracts the most common subjects of a given verb in a parsed document. Returns a list."""
-    pass
+    subjects = Counter()
+    verb_occurrences = 0
+    subject_occurrences = Counter()
+    pair_occurrences = Counter()
 
 
 
@@ -203,10 +207,10 @@ if __name__ == "__main__":
     df = read_novels(path) # this line will fail until you have completed the read_novels function above.
     #print(df.head())
     #nltk.download("cmudict")
-    parse(df)
+    #parse(df)
     #print(df.head())
     print(get_ttrs(df))
-    print(get_fks(df))
+    #print(get_fks(df))
     #df = pd.read_pickle(Path.cwd() / "pickles" /"name.pickle")
     # print(adjective_counts(df))
     """ 
