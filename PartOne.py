@@ -11,6 +11,7 @@ from collections import Counter
 import re
 import string
 import os 
+from spacy.tokens import Doc
 
 nlp = spacy.load("en_core_web_sm")
 nlp.max_length = 2000000
@@ -133,13 +134,16 @@ def parse(df, store_path=Path.cwd() / "pickles", out_name="parsed.pickle"):
     for story in df["text"]:
         if len(story) > 1000000:
             print("File too big, parsing texts in sections as per note on question 1d")
-            doc = []
+            doc_part = []
             for i in range(0, len(story), 1000000):
                 section = story[i:i+1000000]
-                doc.append(nlp(section))  # parse the section
-            parsed_docs.append(doc)
+                doc_part.append(nlp(section))  # parse the section
+            
+            complete_doc = Doc.from_docs(doc_part)  # combine the sections into a single Doc
         else:
-            parsed_docs.append(nlp(story))  # parse the whole text
+            fukk_doc = nlp(story)  # parse the whole text
+
+        parsed_docs.append(complete_doc)  # add the parsed doc to the list
     
     df['parsed'] = parsed_docs  # add the parsed docs to the DataFrame
 
@@ -165,17 +169,9 @@ def get_fks(df):
     return results
 
 
-def subjects_by_verb_pmi(doc, target_verb):
-    """Extracts the most common subjects of a given verb in a parsed document. Returns a list."""
-    subjects = Counter()
-    verb_occurrences = 0
-    subject_occurrences = Counter()
-    pair_occurrences = Counter()
 
-
-
-def subjects_by_verb_count(doc, verb):
-    """Extracts the most common subjects of a given verb in a parsed document. Returns a list."""
+"""def subjects_by_verb_count(doc, verb):
+    Extracts the most common subjects of a given verb in a parsed document. Returns a list.
     subjects = Counter()
 
     for token in doc:
@@ -185,31 +181,59 @@ def subjects_by_verb_count(doc, verb):
                     subjects[subject.lemma_] += 1
 
     
-    return subjects.most_common(100)  # return the 100 most common subjects
+    return subjects.most_common(100)  # return the 100 most common subjects"""
 
 
-def adjective_counts(doc):
-    """Extracts the most common adjectives in a parsed document. Returns a list of tuples."""
+"""def adjective_counts(doc):
+    Extracts the most common adjectives in a parsed document. Returns a list of tuples.
     adjectives = Counter()
 
     for token in doc:
         if token.pos_ == "ADJ":
             adjectives[token.lemma_] += 1
     
-    return adjectives.most_common(100)  # return the 100 most common adjectives
+    return adjectives.most_common(100)  # return the 100 most common adjectives"""
+
+"""def subjects_by_verb_pmi(doc, target_verb):
+    Extracts the most common subjects of a given verb in a parsed document. Returns a list.
+    subjects = Counter()
+    verb_occurrences = 0
+    subject_occurrences = Counter()
+    pair_occurrences = Counter()"""
+
+def novel_titles(df):
+    """Returns the title of each novel and a list of the ten most common syntatic objects overall in the text"""
+    results = {}
+
+    for title, doc in zip(df['title'], df['parsed']):
+        syntactic_objects = Counter()
+
+        for token in doc:
+            if token.dep_ in ("dobj", "pobj"):
+                syntactic_objects[token.lemma_] += 1
+
+        results[title] = syntactic_objects.most_common(10)  # get the 10 most common syntactic objects
+
+    return results
+    
+def novel_hear_syntactics(df):
+    """Returns the title of each novel and a list of the ten most common syntatic objects of the verb ‘to hear’ (in any tense) in the text, ordered by their frequency"""
+
+def novel_hear_pmis(df):
+    """Returns the title of each novel and a list of the ten most common syntatic objects of the verb ‘to hear’ (in any tense) in the text, ordered by their pointwise mutual information (PMI) with the verb ‘to hear’"""
 
 if __name__ == "__main__":
     """
     uncomment the following lines to run the functions once you have completed them
     """
-    path = Path.cwd() / "p1-texts" / "novels"
+    #path = Path.cwd() / "p1-texts" / "novels"
     #print(path)
-    df = read_novels(path) # this line will fail until you have completed the read_novels function above.
+    #df = read_novels(path) # this line will fail until you have completed the read_novels function above.
     #print(df.head())
     #nltk.download("cmudict")
     #parse(df)
     #print(df.head())
-    print(get_ttrs(df))
+    #print(get_ttrs(df))
     #print(get_fks(df))
     #df = pd.read_pickle(Path.cwd() / "pickles" /"name.pickle")
     # print(adjective_counts(df))
