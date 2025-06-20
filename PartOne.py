@@ -110,7 +110,7 @@ def count_syl(word, d):
     if word in d:
         return len(d[word][0])  # return the number of syllables in the dictionary, should be the first entry of the list
     else: # estimate syllables by counting vowel clusters
-        vowels = "aeiouy"
+        vowels = ['a','e','i','o','u','y']
         count = 0
         prev_vowel = False
         for char in word:
@@ -141,7 +141,7 @@ def parse(df, store_path=Path.cwd() / "pickles", out_name="parsed.pickle"):
             
             complete_doc = Doc.from_docs(doc_part)  # combine the sections into a single Doc
         else:
-            fukk_doc = nlp(story)  # parse the whole text
+            complete_doc = nlp(story)  # parse the whole text
 
         parsed_docs.append(complete_doc)  # add the parsed doc to the list
     
@@ -194,13 +194,6 @@ def get_fks(df):
     
     return adjectives.most_common(100)  # return the 100 most common adjectives"""
 
-"""def subjects_by_verb_pmi(doc, target_verb):
-    Extracts the most common subjects of a given verb in a parsed document. Returns a list.
-    subjects = Counter()
-    verb_occurrences = 0
-    subject_occurrences = Counter()
-    pair_occurrences = Counter()"""
-
 def novel_titles(df):
     """Returns the title of each novel and a list of the ten most common syntatic objects overall in the text"""
     results = {}
@@ -217,10 +210,31 @@ def novel_titles(df):
     return results
     
 def novel_hear_syntactics(df):
-    """Returns the title of each novel and a list of the ten most common syntatic objects of the verb ‘to hear’ (in any tense) in the text, ordered by their frequency"""
+    """Returns the title of each novel and a list of the ten most common syntatic objects of the verb to hear (in any tense) in the text, ordered by their frequency"""
+    results = {}
+
+    for title, doc in zip(df['title'], df['parsed']):
+        hear_objects = Counter()
+
+        for token in doc:
+            if token.dep_ == "VERB" and token.lemma_ == "hear":
+                for object in token.children:
+                    if object.dep_ in ("dobj", "pobj"):
+                        hear_objects[token.lemma_] += 1
+
+        results[title] = hear_objects.most_common(10)  # get the 10 most common syntactic objects
+
+    return results
 
 def novel_hear_pmis(df):
-    """Returns the title of each novel and a list of the ten most common syntatic objects of the verb ‘to hear’ (in any tense) in the text, ordered by their pointwise mutual information (PMI) with the verb ‘to hear’"""
+    """Returns the title of each novel and a list of the ten most common syntatic objects of the verb to hear (in any tense) in the text, ordered by their pointwise mutual information (PMI) with the verb ‘to hear’"""
+    obj_cnt = Counter()
+    hear_cnt = 0
+    cooccur = Counter()
+
+    for token in doc:
+        
+
 
 if __name__ == "__main__":
     """
