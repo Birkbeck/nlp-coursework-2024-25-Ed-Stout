@@ -233,8 +233,28 @@ def novel_hear_pmis(df):
     cooccur = Counter()
 
     for token in doc:
-        
+        if token.dep_ in ("dobj", "pobj"):
+            obj_cnt[token.lemma_] += 1
 
+            head_word = token.head
+            if head_word.pos == "VERB" and head_word.lemma_ == "hear":
+                hear_cnt += 1
+                cooccur[token.lemma_] += 1
+
+     # 2) Compute PMI for each object that actually occurred with hear
+        N = sum(obj_cnt.values())  # total object relations in the novel
+        pmi_scores = {}
+        for lemma, c_xy in cooccur.items():
+            c_x = obj_cnt[lemma]
+            c_y = hear_cnt
+            # PMI = log2((c_xy * N) / (c_x * c_y))
+            pmi_scores[lemma] = math.log2((c_xy * N) / (c_x * c_y))
+
+        # 3) Take the top 10 by descending PMI
+        top10 = sorted(pmi_scores.items(), key=lambda kv: kv[1], reverse=True)[:10]
+        results[title] = top10
+
+    return results
 
 if __name__ == "__main__":
     """
