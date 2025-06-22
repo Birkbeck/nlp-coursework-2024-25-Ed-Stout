@@ -53,7 +53,7 @@ def clean_text(text):
     text = text.lower()  # convert to lowercase
     re_punc = re.compile('[%s]' % re.escape(string.punctuation))  # regex for punctuation
     text = re_punc.sub('', text)  # remove punctuation
-    return text
+    return text 
 
 def nltk_ttr(text):
     """Calculates the type-token ratio of a text. Text is tokenized using nltk.word_tokenize."""
@@ -169,9 +169,8 @@ def get_fks(df):
     return results
 
 
-
-"""def subjects_by_verb_count(doc, verb):
-    Extracts the most common subjects of a given verb in a parsed document. Returns a list.
+def subjects_by_verb_count(doc, verb):
+    """Extracts the most common subjects of a given verb in a parsed document. Returns a list."""
     subjects = Counter()
 
     for token in doc:
@@ -184,15 +183,15 @@ def get_fks(df):
     return subjects.most_common(100)  # return the 100 most common subjects"""
 
 
-"""def adjective_counts(doc):
-    Extracts the most common adjectives in a parsed document. Returns a list of tuples.
+def adjective_counts(doc):
+    """Extracts the most common adjectives in a parsed document. Returns a list of tuples."""
     adjectives = Counter()
 
     for token in doc:
         if token.pos_ == "ADJ":
             adjectives[token.lemma_] += 1
     
-    return adjectives.most_common(100)  # return the 100 most common adjectives"""
+    return adjectives.most_common(100)  # return the 100 most common adjectives
 
 def novel_titles(df):
     """Returns the title of each novel and a list of the ten most common syntatic objects overall in the text"""
@@ -227,30 +226,44 @@ def novel_hear_syntactics(df):
     return results
 
 def novel_hear_pmis(df):
-    """Returns the title of each novel and a list of the ten most common syntatic objects of the verb to hear (in any tense) in the text, ordered by their pointwise mutual information (PMI) with the verb ‘to hear’"""
-    obj_cnt = Counter()
-    hear_cnt = 0
-    cooccur = Counter()
+    """Returns the title of each novel and a list of the ten most common syntatic objects of the verb to hear (in any tense) in the text, ordered by their pointwise mutual information (PMI) with the verb to hear"""
+    results = {}
 
-    for token in doc:
-        if token.dep_ in ("dobj", "pobj"):
-            obj_cnt[token.lemma_] += 1
+    for title, doc in zip(df['title'], df['parsed']):
+        obj_cnt = Counter()
+        hear_cnt = 0
+        cooccur = Counter()
 
-            head_word = token.head
-            if head_word.pos == "VERB" and head_word.lemma_ == "hear":
-                hear_cnt += 1
-                cooccur[token.lemma_] += 1
+        for token in doc: #p(x)
+            if token.dep_ in ("dobj", "pobj"): 
+                obj_cnt[token.lemma_] += 1 #count objects
 
-     # 2) Compute PMI for each object that actually occurred with hear
-        N = sum(obj_cnt.values())  # total object relations in the novel
+        for token in doc: #p(y)
+            if token.pos == "VERB" and token.lemma_ == "hear":
+                #hear_cnt += 1          #this would count every time the verb "hear" appears, but we want to count the number of times it is used with an object (I think)
+                hear_objects = []
+
+                for child in token.children:
+                    if child.dep_ in ("dobj", "pobj"):
+                        hear_objects.append(child)
+
+                if len(hear_objects) > 0:
+                    hear_cnt += 1  #count the number of times the verb "hear" is used with an object
+
+                    for obj in hear_objects:
+                        cooccur[obj.lemma_] += 1    # count the co-occurrence of the object with the verb "hear"
+
+        total_objects = sum(obj_cnt.values())  # total number of objects  
         pmi_scores = {}
-        for lemma, c_xy in cooccur.items():
-            c_x = obj_cnt[lemma]
-            c_y = hear_cnt
-            # PMI = log2((c_xy * N) / (c_x * c_y))
-            pmi_scores[lemma] = math.log2((c_xy * N) / (c_x * c_y))
 
-        # 3) Take the top 10 by descending PMI
+        for word, cnt in cooccur.items():
+            p_x = obj_cnt[word] / total_objects  # P(x)
+            p_y = hear_cnt / total_objects  # P(y)
+            p_xy = cnt / total_objects  # P(x,y)
+
+            pmi_scores[word] = np.log2(p_xy / (p_x * p_y))
+
+            # 3) Take the top 10 by descending PMI
         top10 = sorted(pmi_scores.items(), key=lambda kv: kv[1], reverse=True)[:10]
         results[title] = top10
 
@@ -260,19 +273,19 @@ if __name__ == "__main__":
     """
     uncomment the following lines to run the functions once you have completed them
     """
-    #path = Path.cwd() / "p1-texts" / "novels"
-    #print(path)
-    #df = read_novels(path) # this line will fail until you have completed the read_novels function above.
-    #print(df.head())
-    #nltk.download("cmudict")
-    #parse(df)
-    #print(df.head())
-    #print(get_ttrs(df))
-    #print(get_fks(df))
-    #df = pd.read_pickle(Path.cwd() / "pickles" /"name.pickle")
-    # print(adjective_counts(df))
-    """ 
-    for i, row in df.iterrows():
+    path = Path.cwd() / "p1-texts" / "novels"
+    print(path)
+    df = read_novels(path) # this line will fail until you have completed the read_novels function above.
+    print(df.head())
+    nltk.download("cmudict")
+    parse(df)
+    print(df.head())
+    print(get_ttrs(df))
+    print(get_fks(df))
+    df = pd.read_pickle(Path.cwd() / "pickles" /"parsed.pickle")
+    #print(adjective_counts(df))
+    
+    """"for i, row in df.iterrows():
         print(row["title"])
         print(subjects_by_verb_count(row["parsed"], "hear"))
         print("\n")
@@ -280,6 +293,6 @@ if __name__ == "__main__":
     for i, row in df.iterrows():
         print(row["title"])
         print(subjects_by_verb_pmi(row["parsed"], "hear"))
-        print("\n")
-    """
+        print("\n")"""
+
 
