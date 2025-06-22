@@ -11,20 +11,27 @@ def preprocess_speeches(csv_path=None):
 
     df['party'] = df['party'].replace('Labour (Co-op)', 'Labour') #1
 
-    # 2. Filter to the four most common parties
-    # 2a. Count speeches per party
-    party_counts = df['party'].value_counts()
+    party_counts = df['party'].value_counts() #2a
     print("Counts per party before filtering:")
     print(party_counts)
 
-    # 2b. Sort counts descending
-    sorted_counts = party_counts.sort_values(ascending=False)
+    sorted_counts = party_counts.sort_values(ascending=False) #2b
     print("\nSorted counts (highest to lowest):")
     print(sorted_counts)
 
-    # 2c. Select the top 4 parties
-    top_parties = list(sorted_counts.index[:4])
+    top_parties = list(sorted_counts.index[:4]) #2c
     print(f"\nTop 4 parties: {top_parties}")
 
-    # 2d. Filter DataFrame to only top 4 parties
-    df = df[df['party'].isin(top_parties)]
+    df = df[df['party'].isin(top_parties)] #2d
+
+    df = df.drop(columns=['Speaker']) #3
+
+    cleaned_rows = []
+    for _, row in df.iterrows(): #4
+        is_speech = (row['speech_class'] == 'Speech')
+        long_enough = (len(row['speech']) >= 1000)
+        if is_speech and long_enough:
+            cleaned_rows.append(row)
+
+    cleaned_df = pd.DataFrame(cleaned_rows).reset_index(drop=True)
+    return cleaned_df
