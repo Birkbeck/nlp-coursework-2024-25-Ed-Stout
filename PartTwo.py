@@ -42,3 +42,21 @@ vectorizer = TfidfVectorizer(stop_words='english', max_features=3000)
 X = vectorizer.fit_transform(df['speech'])
 y = df['party']
 
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.25,
+    stratify=y,
+    random_state=26
+)
+
+# Print out the resulting shapes and class distributions
+print(f"Feature matrix: {X.shape[0]} samples × {X.shape[1]} features")
+print(f"  → Training set: {X_train.shape[0]} samples")
+print(f"  → Test set:     {X_test.shape[0]} samples\n")
+
+print("Class distribution in training set:")
+print(y_train.value_counts())
+print("\nClass distribution in test set:")
+print(y_test.value_counts())
+
+
