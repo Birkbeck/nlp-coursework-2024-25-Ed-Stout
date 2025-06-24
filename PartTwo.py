@@ -20,11 +20,11 @@ print(sorted_counts)
 top_parties = list(sorted_counts.index[:4]) #2c
 print(f"\nTop 4 parties: {top_parties}")
 
-#df = df[df['party'].isin(top_parties)] #2d
+df = df[df['party'].isin(top_parties)] #2d
 
-#df = df[df['speech_class'] == 'Speech'] #3
+df = df[df['speech_class'] == 'Speech'] #3
 
-#df = df[df['speech'].str.len() >= 1000] #4
+df = df[df['speech'].str.len() >= 1000] #4
 
 """cleaned_rows = []
 for _, row in df.iterrows(): #4
@@ -36,5 +36,7 @@ for _, row in df.iterrows(): #4
 #cleaned_df = pd.DataFrame(cleaned_rows).reset_index(drop=True)
 #return cleaned_df
 
-new_party_counts = df['party'].value_counts().sort_values(ascending=False) 
-print(new_party_counts)
+#new_party_counts = df['party'].value_counts().sort_values(ascending=False) 
+#print(new_party_counts)
+print(df.shape)
+
