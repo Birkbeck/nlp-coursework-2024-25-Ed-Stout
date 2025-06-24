@@ -2,8 +2,11 @@ import pandas as pd
 from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import f1_score, classification_report
 
-#Question i
+#Question a
 csv_path = Path.cwd() / "p2-texts" / "hansard40000.csv"
 
 df = pd.read_csv(csv_path)
@@ -37,7 +40,7 @@ return cleaned_df"""
 #print(new_party_counts)
 #print(df.shape)
 
-#Question ii
+#Question b
 vectorizer = TfidfVectorizer(stop_words='english', max_features=3000)
 X = vectorizer.fit_transform(df['speech'])
 y = df['party']
@@ -59,4 +62,21 @@ print(y_train.value_counts())
 print("\nClass distribution in test set:")
 print(y_test.value_counts())
 
+#question c
 
+rf_clf  = RandomForestClassifier(n_estimators=300, random_state=26)
+svm_clf = SVC(kernel='linear', random_state=26)
+
+rf_clf.fit(X_train, y_train)
+svm_clf.fit(X_train, y_train)
+
+y_pred_rf  = rf_clf.predict(X_test)
+y_pred_svm = svm_clf.predict(X_test)
+
+print("=== Random Forest (n_estimators=300) ===")
+print("Macro-average F1:   ", f1_score(y_test, y_pred_rf,  average='macro'))
+print("\nClassification Report:\n", classification_report(y_test, y_pred_rf))
+
+print("\n\n=== SVM (linear kernel) ===")
+print("Macro-average F1:   ", f1_score(y_test, y_pred_svm, average='macro'))
+print("\nClassification Report:\n", classification_report(y_test, y_pred_svm))
