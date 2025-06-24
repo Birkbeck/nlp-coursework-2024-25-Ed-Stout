@@ -26,12 +26,16 @@ def preprocess_speeches(csv_path=None):
 
     df = df.drop(columns=['Speaker']) #3
 
-    cleaned_rows = []
+    df = df[df['speech_class'] == 'Speech'] #4
+
+    df = df[df['speech'].str.len() >= 1000] #5
+    
+    """cleaned_rows = []
     for _, row in df.iterrows(): #4
         is_speech = (row['speech_class'] == 'Speech')
         long_enough = (len(row['speech']) >= 1000)
         if is_speech and long_enough:
-            cleaned_rows.append(row)
+            cleaned_rows.append(row)"""
 
     cleaned_df = pd.DataFrame(cleaned_rows).reset_index(drop=True)
     return cleaned_df
