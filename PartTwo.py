@@ -32,20 +32,11 @@ df = df[df['party'].isin(top_parties)] #2d
 df = df[df['speech_class'] == 'Speech'] #3
 df = df[df['speech'].str.len() >= 1000] #4
 
-"""cleaned_rows = []
-for _, row in df.iterrows(): #4
-    is_speech = (row['speech_class'] == 'Speech')
-    long_enough = (len(row['speech']) >= 1000)
-    if is_speech and long_enough:
-        cleaned_rows.append(row)
-cleaned_df = pd.DataFrame(cleaned_rows).reset_index(drop=True)
-return cleaned_df"""
-
 #new_party_counts = df['party'].value_counts().sort_values(ascending=False) 
 #print(new_party_counts)
-#print(df.shape)
+print(df.shape)
 
-"""#Question b
+#Question b
 vectorizer = TfidfVectorizer(stop_words='english', max_features=3000)
 X = vectorizer.fit_transform(df['speech'])
 y = df['party']
@@ -78,13 +69,11 @@ svm_clf.fit(X_train, y_train)
 y_pred_rf  = rf_clf.predict(X_test)
 y_pred_svm = svm_clf.predict(X_test)
 
-print("=== Random Forest (n_estimators=300) ===")
-print("Macro-average F1:   ", f1_score(y_test, y_pred_rf,  average='macro'))
-print("\nClassification Report:\n", classification_report(y_test, y_pred_rf))
+print("Random Forest F1 Score: ", f1_score(y_test, y_pred_rf,  average='macro'))
+#print("Classification Report: ", classification_report(y_test, y_pred_rf))
 
-print("\n\n=== SVM (linear kernel) ===")
-print("Macro-average F1:   ", f1_score(y_test, y_pred_svm, average='macro'))
-print("\nClassification Report:\n", classification_report(y_test, y_pred_svm))
+print("SVM (linear kernel) F1 Score: ", f1_score(y_test, y_pred_svm,  average='macro'))
+#print("Classification Report: ", classification_report(y_test, y_pred_svm))
 
 #question d
 
@@ -95,7 +84,7 @@ y = df['party']
 X_train, X_test, y_train, y_test = train_test_split(
     X, y,
     test_size=0.25,
-    stratify=y, #d
+    stratify=y, 
     random_state=26
 )
 
@@ -118,15 +107,13 @@ svm_clf.fit(X_train, y_train)
 y_pred_rf  = rf_clf.predict(X_test)
 y_pred_svm = svm_clf.predict(X_test)
 
-print("=== Random Forest (n_estimators=300) ===")
-print("Macro-average F1:   ", f1_score(y_test, y_pred_rf,  average='macro'))
-print("\nClassification Report:\n", classification_report(y_test, y_pred_rf))
+print("Random Forest F1 Score: ", f1_score(y_test, y_pred_rf,  average='macro'))
+#print("Classification Report: ", classification_report(y_test, y_pred_rf))
 
-print("\n\n=== SVM (linear kernel) ===")
-print("Macro-average F1:   ", f1_score(y_test, y_pred_svm, average='macro'))
-print("\nClassification Report:\n", classification_report(y_test, y_pred_svm))"""
+print("SVM (linear kernel) F1 Score: ", f1_score(y_test, y_pred_svm,  average='macro'))
+#print("Classification Report: ", classification_report(y_test, y_pred_svm))
 
-# 1) Extend the stop‐word set with issue terms
+#question e
 issue_terms = {
     'benefits', 'immigration', 'asylum', 'nhs', 'health', 'doctors', 'economy',
     'russia', 'brexit', 'covid', 'lockdown', 'furlough', 'testing', 'ppe',
@@ -139,35 +126,33 @@ issue_terms = {
     'trade', 'fishing', 'agriculture', 'huawei', 'digital', 'misinformation',
     'cybersecurity', 'china', 'defense', 'aid', 'relations', 'schools',
     'exams', 'fees', 'HS2', 'COP26', 'Trump'
-}
+} #adding political issue terms form 2020
 
-stop_words = ENGLISH_STOP_WORDS.union(issue_terms)
+stop_words = ENGLISH_STOP_WORDS.union(issue_terms) 
 
-# 2) Build a spaCy‐based tokenizer with POS filtering
 import spacy
-nlp = spacy.load('en_core_web_sm', disable=['parser','ner'])
+nlp = spacy.load('en_core_web_sm', disable=['parser','ner']) #POS filtering, spaCy tokenizer
 
-def custom_tokenizer_pos(text):
-    # lowercase + strip punctuation
-    cleaned = re.sub(r'[^\w\s]', '', text.lower())
+def politics_tokenizer(text):
+    cleaned = re.sub(r'[^\w\s]', '', text.lower()) #lowercase and remove punctuation
     doc = nlp(cleaned)
-    # keep only NOUN, VERB, ADJ, ADV, lemmatize, drop stop‐words
-    return [
-        token.lemma_
-        for token in doc
-        if token.pos_ in {'NOUN','VERB','ADJ','ADV'}
-           and token.lemma_ not in stop_words
-    ]
 
-# 3) Plug into your vectoriser
+    lemmas = []
+    for token in doc:
+        pos = token.pos_
+        lemma = token.lemma_
+        if pos in {'NOUN', 'VERB', 'ADJ', 'ADV'} and lemma not in stop_words: #only keep nouns, verbs, adjectives, and political words
+            lemmas.append(lemma)
+
+    return lemmas
+
 vectorizer = TfidfVectorizer(
-    tokenizer=custom_tokenizer_pos,
-    token_pattern=None,    # required when you supply tokenizer
-    ngram_range=(1, 3),    # or whatever you’re currently testing
+    tokenizer=politics_tokenizer,
+    token_pattern=None,   
+    ngram_range=(1, 3),    #trigrams and bigrams
     max_features=3000
 )
 
-# 4) Fit/transform, split, retrain & re-evaluate exactly as before:
 X = vectorizer.fit_transform(df['speech'])
 y = df['party']
 
@@ -175,16 +160,15 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.25, stratify=y, random_state=26
 )
 
-# (re)define the three models you want to compare
 classifiers = {
     "Random Forest (100 trees)" : RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=26),
     "Linear SVM"                : SVC(kernel='linear', class_weight='balanced', random_state=26),
-    "Multinomial NB"            : MultinomialNB()
+    "Naive Bayes"            : MultinomialNB()
 }
 
 for name, clf in classifiers.items():
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
-    print(f"{name:<20} macro-F1 = {f1_score(y_test, y_pred, average='macro'):.3f}")
+    print(f"{name:} macro-F1 = {f1_score(y_test, y_pred, average='macro')}")
 
 print("SpaCy, bigrams and trigrams, stemming, stop-words removed, punct + lower removal included")
