@@ -126,58 +126,65 @@ print("\n\n=== SVM (linear kernel) ===")
 print("Macro-average F1:   ", f1_score(y_test, y_pred_svm, average='macro'))
 print("\nClassification Report:\n", classification_report(y_test, y_pred_svm))"""
 
+# 1) Extend the stop‐word set with issue terms
+issue_terms = {
+    'benefits', 'immigration', 'asylum', 'nhs', 'health', 'doctors', 'economy',
+    'russia', 'brexit', 'covid', 'lockdown', 'furlough', 'testing', 'ppe',
+    'ventilators', 'vaccines', 'masks', 'restrictions', 'education',
+    'universities', 'unemployment', 'recession', 'hospitality', 'retail',
+    'aviation', 'environment', 'transport', 'railways', 'cycling', 'renewables',
+    'housing', 'evictions', 'homelessness', 'inequality', 'statues',
+    'colonialism', 'policing', 'protests', 'crime', 'violence', 'poverty',
+    'mental', 'care', 'elderly', 'racism', 'security', 'climate', 'energy',
+    'trade', 'fishing', 'agriculture', 'huawei', 'digital', 'misinformation',
+    'cybersecurity', 'china', 'defense', 'aid', 'relations', 'schools',
+    'exams', 'fees', 'HS2', 'COP26', 'Trump'
+}
 
-# Assumes at the top of your script you have imported:
-#   re, SnowballStemmer, ENGLISH_STOP_WORDS,
-#   TfidfVectorizer, train_test_split,
-#   RandomForestClassifier, SVC, MultinomialNB, f1_score
+stop_words = ENGLISH_STOP_WORDS.union(issue_terms)
 
-# Initialize stemmer and stop-word set
-stemmer = SnowballStemmer('english')
-stop_words = ENGLISH_STOP_WORDS
+# 2) Build a spaCy‐based tokenizer with POS filtering
+import spacy
+nlp = spacy.load('en_core_web_sm', disable=['parser','ner'])
 
-# Custom tokenizer: strip punctuation & lowercase, drop stop-words, stem
-def custom_tokenizer_with_stemming(text):
-    # lowercase & remove punctuation
-    cleaned = re.sub(r"[^\w\s]", "", text.lower())
-    tokens = cleaned.split()
-    # drop stop-words
-    filtered = [tok for tok in tokens if tok not in stop_words]
-    # stem tokens
-    return [stemmer.stem(tok) for tok in filtered]
+def custom_tokenizer_pos(text):
+    # lowercase + strip punctuation
+    cleaned = re.sub(r'[^\w\s]', '', text.lower())
+    doc = nlp(cleaned)
+    # keep only NOUN, VERB, ADJ, ADV, lemmatize, drop stop‐words
+    return [
+        token.lemma_
+        for token in doc
+        if token.pos_ in {'NOUN','VERB','ADJ','ADV'}
+           and token.lemma_ not in stop_words
+    ]
 
-# TF-IDF vectoriser: include 1–3 grams, top 3000 features (no min_df/max_df filtering)
+# 3) Plug into your vectoriser
 vectorizer = TfidfVectorizer(
-    tokenizer=custom_tokenizer_with_stemming,
-    token_pattern=None,
-    #ngram_range=(1, 3),
+    tokenizer=custom_tokenizer_pos,
+    token_pattern=None,    # required when you supply tokenizer
+    ngram_range=(1, 3),    # or whatever you’re currently testing
     max_features=3000
 )
 
-# Fit-transform the speech texts
+# 4) Fit/transform, split, retrain & re-evaluate exactly as before:
 X = vectorizer.fit_transform(df['speech'])
-# Labels
 y = df['party']
 
-# Split into train/test
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y,
-    test_size=0.25,
-    stratify=y,
-    random_state=26
+    X, y, test_size=0.25, stratify=y, random_state=26
 )
 
-# Define classifiers with Random Forest using 50 trees
+# (re)define the three models you want to compare
 classifiers = {
-    "Random Forest (100 trees)": RandomForestClassifier(n_estimators=100, random_state=26),
-    "Linear SVM"              : SVC(kernel='linear', random_state=26),
-    "Multinomial NB"          : MultinomialNB()
+    "Random Forest (100 trees)" : RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=26),
+    "Linear SVM"                : SVC(kernel='linear', class_weight='balanced', random_state=26),
+    "Multinomial NB"            : MultinomialNB()
 }
 
-# Train & print macro-F1 for each
 for name, clf in classifiers.items():
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
-    print(f"{name:<25} macro-F1 = {f1_score(y_test, y_pred, average='macro'):.3f}")
+    print(f"{name:<20} macro-F1 = {f1_score(y_test, y_pred, average='macro'):.3f}")
 
-print("bigrams and trigrams, stemming, stop-words removed, punct + lower removal included")
+print("SpaCy, bigrams and trigrams, stemming, stop-words removed, punct + lower removal included")
