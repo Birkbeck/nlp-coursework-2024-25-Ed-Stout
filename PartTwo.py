@@ -80,3 +80,46 @@ print("\nClassification Report:\n", classification_report(y_test, y_pred_rf))
 print("\n\n=== SVM (linear kernel) ===")
 print("Macro-average F1:   ", f1_score(y_test, y_pred_svm, average='macro'))
 print("\nClassification Report:\n", classification_report(y_test, y_pred_svm))
+
+#question d
+
+vectorizer = TfidfVectorizer(stop_words='english', max_features=3000)
+X = vectorizer.fit_transform(df['speech'])
+y = df['party']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.25,
+    stratify=y,
+    ngram_range=(1, 3), #d
+    random_state=26
+)
+
+# Print out the resulting shapes and class distributions
+print(f"Feature matrix: {X.shape[0]} samples × {X.shape[1]} features")
+print(f"  → Training set: {X_train.shape[0]} samples")
+print(f"  → Test set:     {X_test.shape[0]} samples\n")
+
+print("Class distribution in training set:")
+print(y_train.value_counts())
+print("\nClass distribution in test set:")
+print(y_test.value_counts())
+
+rf_clf  = RandomForestClassifier(n_estimators=300, random_state=26)
+svm_clf = SVC(kernel='linear', random_state=26)
+
+rf_clf.fit(X_train, y_train)
+svm_clf.fit(X_train, y_train)
+
+y_pred_rf  = rf_clf.predict(X_test)
+y_pred_svm = svm_clf.predict(X_test)
+
+print("=== Random Forest (n_estimators=300) ===")
+print("Macro-average F1:   ", f1_score(y_test, y_pred_rf,  average='macro'))
+print("\nClassification Report:\n", classification_report(y_test, y_pred_rf))
+
+print("\n\n=== SVM (linear kernel) ===")
+print("Macro-average F1:   ", f1_score(y_test, y_pred_svm, average='macro'))
+print("\nClassification Report:\n", classification_report(y_test, y_pred_svm))
+
+
