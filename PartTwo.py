@@ -1,12 +1,15 @@
 import re
 import pandas as pd
+import spacy
 from pathlib import Path
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.metrics import f1_score, classification_report
 from sklearn.naive_bayes import MultinomialNB
+from nltk.stem import SnowballStemmer
+#from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 
 #Question a
 csv_path = Path.cwd() / "p2-texts" / "hansard40000.csv"
@@ -124,21 +127,39 @@ print("Macro-average F1:   ", f1_score(y_test, y_pred_svm, average='macro'))
 print("\nClassification Report:\n", classification_report(y_test, y_pred_svm))"""
 
 
-# 1) Vectoriser: lowercase, strip punctuation, remove stop-words, max 3000 features
-def strip_punct_lower(text):
-    # lowercase & drop anything that isn't letter/number/whitespace
-    return re.sub(r'[^\w\s]', '', text.lower())
+# Assumes at the top of your script you have imported:
+#   re, SnowballStemmer, ENGLISH_STOP_WORDS,
+#   TfidfVectorizer, train_test_split,
+#   RandomForestClassifier, SVC, MultinomialNB, f1_score
 
+# Initialize stemmer and stop-word set
+stemmer = SnowballStemmer('english')
+stop_words = ENGLISH_STOP_WORDS
+
+# Custom tokenizer: strip punctuation & lowercase, drop stop-words, stem
+def custom_tokenizer_with_stemming(text):
+    # lowercase & remove punctuation
+    cleaned = re.sub(r"[^\w\s]", "", text.lower())
+    tokens = cleaned.split()
+    # drop stop-words
+    filtered = [tok for tok in tokens if tok not in stop_words]
+    # stem tokens
+    return [stemmer.stem(tok) for tok in filtered]
+
+# TF-IDF vectoriser: include 1–3 grams, top 3000 features (no min_df/max_df filtering)
 vectorizer = TfidfVectorizer(
-    preprocessor=strip_punct_lower,
-    stop_words='english',
+    tokenizer=custom_tokenizer_with_stemming,
+    token_pattern=None,
+    #ngram_range=(1, 3),
     max_features=3000
 )
 
+# Fit-transform the speech texts
 X = vectorizer.fit_transform(df['speech'])
+# Labels
 y = df['party']
 
-# 2) Train/test split (25% test, stratified, seed=26)
+# Split into train/test
 X_train, X_test, y_train, y_test = train_test_split(
     X, y,
     test_size=0.25,
@@ -146,19 +167,17 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=26
 )
 
-# 3) Instantiate classifiers
+# Define classifiers with Random Forest using 50 trees
 classifiers = {
-    "Random Forest (300 trees)" : RandomForestClassifier(n_estimators=300, random_state=26),
-    "Linear SVM"                : SVC(kernel='linear', random_state=26),
-    "Multinomial Naive Bayes"   : MultinomialNB()
+    "Random Forest (100 trees)": RandomForestClassifier(n_estimators=100, random_state=26),
+    "Linear SVM"              : SVC(kernel='linear', random_state=26),
+    "Multinomial NB"          : MultinomialNB()
 }
 
-# 4) Train, predict & report
+# Train & print macro-F1 for each
 for name, clf in classifiers.items():
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
-    print(f"\n=== {name} ===")
-    print("Macro-average F1: ", f1_score(y_test, y_pred, average='macro'))
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
+    print(f"{name:<25} macro-F1 = {f1_score(y_test, y_pred, average='macro'):.3f}")
 
+print("bigrams and trigrams, stemming, stop-words removed, punct + lower removal included")
