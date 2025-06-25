@@ -1,3 +1,4 @@
+import re
 import pandas as pd
 from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -5,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.metrics import f1_score, classification_report
+from sklearn.naive_bayes import MultinomialNB
 
 #Question a
 csv_path = Path.cwd() / "p2-texts" / "hansard40000.csv"
@@ -40,7 +42,7 @@ return cleaned_df"""
 #print(new_party_counts)
 #print(df.shape)
 
-#Question b
+"""#Question b
 vectorizer = TfidfVectorizer(stop_words='english', max_features=3000)
 X = vectorizer.fit_transform(df['speech'])
 y = df['party']
@@ -83,15 +85,14 @@ print("\nClassification Report:\n", classification_report(y_test, y_pred_svm))
 
 #question d
 
-vectorizer = TfidfVectorizer(stop_words='english', max_features=3000)
+vectorizer = TfidfVectorizer(stop_words='english', max_features=3000, ngram_range=(1, 3))
 X = vectorizer.fit_transform(df['speech'])
 y = df['party']
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y,
     test_size=0.25,
-    stratify=y,
-    ngram_range=(1, 3), #d
+    stratify=y, #d
     random_state=26
 )
 
@@ -120,6 +121,44 @@ print("\nClassification Report:\n", classification_report(y_test, y_pred_rf))
 
 print("\n\n=== SVM (linear kernel) ===")
 print("Macro-average F1:   ", f1_score(y_test, y_pred_svm, average='macro'))
-print("\nClassification Report:\n", classification_report(y_test, y_pred_svm))
+print("\nClassification Report:\n", classification_report(y_test, y_pred_svm))"""
 
+
+# 1) Vectoriser: lowercase, strip punctuation, remove stop-words, max 3000 features
+def strip_punct_lower(text):
+    # lowercase & drop anything that isn't letter/number/whitespace
+    return re.sub(r'[^\w\s]', '', text.lower())
+
+vectorizer = TfidfVectorizer(
+    preprocessor=strip_punct_lower,
+    stop_words='english',
+    max_features=3000
+)
+
+X = vectorizer.fit_transform(df['speech'])
+y = df['party']
+
+# 2) Train/test split (25% test, stratified, seed=26)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.25,
+    stratify=y,
+    random_state=26
+)
+
+# 3) Instantiate classifiers
+classifiers = {
+    "Random Forest (300 trees)" : RandomForestClassifier(n_estimators=300, random_state=26),
+    "Linear SVM"                : SVC(kernel='linear', random_state=26),
+    "Multinomial Naive Bayes"   : MultinomialNB()
+}
+
+# 4) Train, predict & report
+for name, clf in classifiers.items():
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+    print(f"\n=== {name} ===")
+    print("Macro-average F1: ", f1_score(y_test, y_pred, average='macro'))
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred))
 
