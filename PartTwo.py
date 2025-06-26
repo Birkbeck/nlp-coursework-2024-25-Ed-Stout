@@ -37,9 +37,9 @@ df = df[df['speech'].str.len() >= 1000] #4
 print(df.shape)
 
 #Question b
-vectorizer = TfidfVectorizer(stop_words='english', max_features=3000)
-X = vectorizer.fit_transform(df['speech'])
-y = df['party']
+vectorizer = TfidfVectorizer(stop_words='english', max_features=3000) #omits stop words
+X = vectorizer.fit_transform(df['speech']) #dependent variable
+y = df['party'] #predictor variable
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y,
@@ -49,18 +49,14 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # Print out the resulting shapes and class distributions
-print(f"Feature matrix: {X.shape[0]} samples × {X.shape[1]} features")
-print(f"  → Training set: {X_train.shape[0]} samples")
-print(f"  → Test set:     {X_test.shape[0]} samples\n")
+print("X_train and X_test shapes: ", X_train.shape, X_test.shape)
 
-print("Class distribution in training set:")
-print(y_train.value_counts())
-print("\nClass distribution in test set:")
-print(y_test.value_counts())
+print("Class distribution in training set: ", y_train.value_counts()) #samples/features in training set
+print("Class distribution in test set: ", y_test.value_counts()) #samples/features in test set
 
 #question c
 
-rf_clf  = RandomForestClassifier(n_estimators=300, random_state=26)
+rf_clf  = RandomForestClassifier(n_estimators=300, random_state=26) #300 trees
 svm_clf = SVC(kernel='linear', random_state=26)
 
 rf_clf.fit(X_train, y_train)
@@ -70,14 +66,14 @@ y_pred_rf  = rf_clf.predict(X_test)
 y_pred_svm = svm_clf.predict(X_test)
 
 print("Random Forest F1 Score: ", f1_score(y_test, y_pred_rf,  average='macro'))
-#print("Classification Report: ", classification_report(y_test, y_pred_rf))
+print("Classification Report: ", classification_report(y_test, y_pred_rf, zero_division=0))
 
 print("SVM (linear kernel) F1 Score: ", f1_score(y_test, y_pred_svm,  average='macro'))
-#print("Classification Report: ", classification_report(y_test, y_pred_svm))
+print("Classification Report: ", classification_report(y_test, y_pred_svm, zero_division=0))
 
 #question d
 
-vectorizer = TfidfVectorizer(stop_words='english', max_features=3000, ngram_range=(1, 3))
+vectorizer = TfidfVectorizer(stop_words='english', max_features=3000, ngram_range=(1, 3)) #bigrams and trigrams
 X = vectorizer.fit_transform(df['speech'])
 y = df['party']
 
@@ -89,14 +85,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # Print out the resulting shapes and class distributions
-print(f"Feature matrix: {X.shape[0]} samples × {X.shape[1]} features")
-print(f"  → Training set: {X_train.shape[0]} samples")
-print(f"  → Test set:     {X_test.shape[0]} samples\n")
+print("X_train and X_test shapes: ", X_train.shape, X_test.shape)
 
-print("Class distribution in training set:")
-print(y_train.value_counts())
-print("\nClass distribution in test set:")
-print(y_test.value_counts())
+print("Class distribution in training set: ", y_train.value_counts())
+print("Class distribution in test set: ", y_test.value_counts())
 
 rf_clf  = RandomForestClassifier(n_estimators=300, random_state=26)
 svm_clf = SVC(kernel='linear', random_state=26)
@@ -108,10 +100,10 @@ y_pred_rf  = rf_clf.predict(X_test)
 y_pred_svm = svm_clf.predict(X_test)
 
 print("Random Forest F1 Score: ", f1_score(y_test, y_pred_rf,  average='macro'))
-#print("Classification Report: ", classification_report(y_test, y_pred_rf))
+print("Classification Report: ", classification_report(y_test, y_pred_rf, zero_division=0))
 
 print("SVM (linear kernel) F1 Score: ", f1_score(y_test, y_pred_svm,  average='macro'))
-#print("Classification Report: ", classification_report(y_test, y_pred_svm))
+print("Classification Report: ", classification_report(y_test, y_pred_svm, zero_division=0))
 
 #question e
 issue_terms = {
@@ -164,11 +156,11 @@ classifiers = {
     "Random Forest (100 trees)" : RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=26),
     "Linear SVM"                : SVC(kernel='linear', class_weight='balanced', random_state=26),
     "Naive Bayes"            : MultinomialNB()
-}
+} #Added Naive Bayes classifier because the spec said 3 classifiers should be used
 
 for name, clf in classifiers.items():
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     print(f"{name:} macro-F1 = {f1_score(y_test, y_pred, average='macro')}")
 
-print("SpaCy, bigrams and trigrams, stemming, stop-words removed, punct + lower removal included")
+print("Classification Report: ", classification_report(y_test, y_pred_svm, zero_division=0)) #print svm, the best performing classifier
