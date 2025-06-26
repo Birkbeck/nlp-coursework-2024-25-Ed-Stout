@@ -209,57 +209,63 @@ def novel_titles(df):
     return results
     
 def novel_hear_syntactics(df):
-    """Returns the title of each novel and a list of the ten most common syntatic objects of the verb to hear (in any tense) in the text, ordered by their frequency"""
+    """Returns the title of each novel and a list of the ten most common syntatic subjects of the verb to hear (in any tense) in the text, ordered by their frequency"""
     results = {}
 
     for title, doc in zip(df['title'], df['parsed']):
         hear_objects = Counter()
 
         for token in doc:
-            if token.dep_ == "VERB" and token.lemma_ == "hear":
-                for object in token.children:
-                    if object.dep_ in ("dobj", "pobj"):
-                        hear_objects[token.lemma_] += 1
+            if token.lemma_ == "hear" and token.pos_ == "VERB":
+                for child in token.children:
+                    if child.dep_ in ("nsubj", "nsubjpass"):
+                        hear_objects[child.lemma_.lower()] += 1
 
         results[title] = hear_objects.most_common(10)  # get the 10 most common syntactic objects
 
     return results
 
 def novel_hear_pmis(df):
-    """Returns the title of each novel and a list of the ten most common syntatic objects of the verb to hear (in any tense) in the text, ordered by their pointwise mutual information (PMI) with the verb to hear"""
+    """Returns the title of each novel and a list of the ten most common syntatic subjects of the verb to hear (in any tense) in the text, ordered by their pointwise mutual information (PMI) with the verb to hear"""
     results = {}
 
     for title, doc in zip(df['title'], df['parsed']):
-        obj_cnt = Counter()
-        hear_cnt = 0
-        cooccur = Counter()
+        subj_cnt = Counter() #counts all subjects in text
+        hear_cnt = 0        #times hear appears
+        cooccur = Counter() #cooccurance of the two
 
         for token in doc: #p(x)
-            if token.dep_ in ("dobj", "pobj"): 
-                obj_cnt[token.lemma_] += 1 #count objects
+            if token.dep_ in ("nsubj", "nsubjpass"): 
+                subj_cnt[token.lemma_.lower()] += 1 #count objects
+        
+        total_subjs = sum(subj_cnt.values())  # total number of objects
+        if total_subjs == 0:
+                    results[title] = [] #deals with division by zero if no subjcts found
+                    continue
+        
+        for token in doc:                #p(y)
+            if token.pos_ == "VERB" and token.lemma_ == "hear":
+                #hear_cnt += 1          #this would count every time the verb "hear" appears, but we want to count the number of times it is used with a subject (I think)
+                hear_subjects = [
+                    child for child in token.children
+                    if child.dep_ in ("nsubj", "nsubjpass")
+                ] 
 
-        for token in doc: #p(y)
-            if token.pos == "VERB" and token.lemma_ == "hear":
-                #hear_cnt += 1          #this would count every time the verb "hear" appears, but we want to count the number of times it is used with an object (I think)
-                hear_objects = []
+                if hear_subjects:
+                    hear_cnt += 1 #count the number of times the verb "hear" is used with an subject
+                    for subj in hear_subjects:
+                        cooccur[subj.lemma_.lower()] += 1 # count the co-occurrence of the subject with the verb "hear"
 
-                for child in token.children:
-                    if child.dep_ in ("dobj", "pobj"):
-                        hear_objects.append(child)
+        if hear_cnt == 0:
+            results[title] = [] #deals with divison by zero again
+            continue
 
-                if len(hear_objects) > 0:
-                    hear_cnt += 1  #count the number of times the verb "hear" is used with an object
-
-                    for obj in hear_objects:
-                        cooccur[obj.lemma_] += 1    # count the co-occurrence of the object with the verb "hear"
-
-        total_objects = sum(obj_cnt.values())  # total number of objects  
         pmi_scores = {}
 
         for word, cnt in cooccur.items():
-            p_x = obj_cnt[word] / total_objects  # P(x)
-            p_y = hear_cnt / total_objects  # P(y)
-            p_xy = cnt / total_objects  # P(x,y)
+            p_x = subj_cnt[word] / total_subjs  # P(x)
+            p_y = hear_cnt / total_subjs  # P(y)
+            p_xy = cnt / total_subjs  # P(x,y)
 
             pmi_scores[word] = np.log2(p_xy / (p_x * p_y))
 
@@ -270,29 +276,68 @@ def novel_hear_pmis(df):
     return results
 
 if __name__ == "__main__":
-    """
-    uncomment the following lines to run the functions once you have completed them
-    """
-    path = Path.cwd() / "p1-texts" / "novels"
-    print(path)
-    df = read_novels(path) # this line will fail until you have completed the read_novels function above.
-    print(df.head())
-    nltk.download("cmudict")
-    parse(df)
-    print(df.head())
-    print(get_ttrs(df))
-    print(get_fks(df))
-    df = pd.read_pickle(Path.cwd() / "pickles" /"parsed.pickle")
+
+    #path = Path.cwd() / "p1-texts" / "novels"
+    #print(path)
+    #df = read_novels(path) # this line will fail until you have completed the read_novels function above.
+    #print(df.head())
+    #nltk.download("cmudict")
+    #parse(df)
+    #print(df.head())
+    #print(get_ttrs(df))
+    #print(get_fks(df))
+    #df = pd.read_pickle(Path.cwd() / "pickles" /"parsed.pickle")
     #print(adjective_counts(df))
     
-    """"for i, row in df.iterrows():
-        print(row["title"])
-        print(subjects_by_verb_count(row["parsed"], "hear"))
-        print("\n")
+    if __name__ == "__main__":
+        path = Path.cwd() / "p1-texts" / "novels"
+        #print(f"Loading novels from: {path}\n")
+        
+        #nltk.download("punkt")
+        #nltk.download("cmudict")
+        
+        df = read_novels(path)
+        #print("DataFrame from read_novels:")
+        #print(df[["title", "author", "year"]].head(), "\n")
 
-    for i, row in df.iterrows():
-        print(row["title"])
-        print(subjects_by_verb_pmi(row["parsed"], "hear"))
-        print("\n")"""
+        # Parse and save the parsed dataframe
+        df = parse(df)
+        #print("Parsed and pickled the DataFrame.\n")
+
+        # Reload the parsed dataframe
+        df = pd.read_pickle(Path.cwd() / "pickles" / "parsed.pickle")
+
+        # TTR
+        #print("Type-Token Ratio (TTR) per novel:")
+        #ttrs = get_ttrs(df)
+        #for title, ttr in ttrs.items():
+       #     print(f"{title}: {ttr}")
+        #print()
+
+        # Flesch-Kincaid
+        #print("Flesch-Kincaid Grade Level per novel:")
+        #fks = get_fks(df)
+        #for title, fk in fks.items():
+        #    print(f"{title}: {fk}")
+        #print()
+
+        # Most common syntactic objects overall
+        print("Top 10 syntactic objects overall per novel:")
+        for title, objs in novel_titles(df).items():
+            print(f"{title}: {objs}")
+        print()
+
+        # Most common syntactic subjects of "hear"
+        print("Top 10 syntactic subjects of 'hear' (by frequency) per novel:")
+        for title, subjects in novel_hear_syntactics(df).items():
+            print(f"{title}: {subjects}")
+        print()
+
+        # Top 10 syntactic subjects of 'hear' (by PMI)
+        print("Top 10 syntactic subjects of 'hear' (by PMI) per novel:")
+        for title, pmi_subjects in novel_hear_pmis(df).items():
+            print(f"{title}: {pmi_subjects}")
+        print()
+
 
 
